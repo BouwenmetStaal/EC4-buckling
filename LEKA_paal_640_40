@@ -1,0 +1,43 @@
+
+from buckling_calculator import BucklingCalculator
+
+from buiseigenschappen import BuisEigenschappen
+from staal_beton_diagram import StaalBetonKolomCalculator
+from pathlib import Path
+import math
+
+diameter = 610
+thickness = 40 - 0.5  # Adjusted thickness for corrosion
+fyd = 355
+
+buis = BuisEigenschappen(t=thickness, diameter=diameter, fyd=fyd)
+
+r = 1
+
+M_Ed = 650
+Ned = 500
+Xhi = 0.8
+staalbeton = StaalBetonKolomCalculator(
+    M_Ed, Ned, r, Xhi, buis.Nc(), buis.NplRd(), buis.MplRd(), buis.MmaxRd()
+)
+
+m = buis.MplRd()
+
+mprd = math.floor(m)
+name = f"{buis.diameter}x{buis.t}mm"
+
+dt = diameter / thickness
+criterion = 90 * (235 / fyd)
+if dt < criterion:
+    plastic = "Plastic analysis allowed"
+else:
+    plastic = "Does not fulfill d/t criterion for plastic analysis"
+
+print(f"CHS Section: {name} MplRd: {mprd} kNm, {plastic}")
+
+folder = Path(r"C:\Users\AJOR\OneDrive - Witteveen+Bos\LEKA_palen")
+
+staalbeton.plot_diagrams(
+    folder
+    / f"{name}_{mprd}_kNm_interaction_and_stability_diagram.png"
+)
