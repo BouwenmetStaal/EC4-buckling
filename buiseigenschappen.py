@@ -175,15 +175,7 @@ class BuisEigenschappen:
         staalbeton = StaalBetonKolomCalculator(MEd, Ned, r, w_buc, self.Nc(), self.NplRd(), MplRd, MmaxRd, list_Nrd, list_Mrd)
         fig = staalbeton.plot_diagrams(path)
 
-    def calculate_equivalent_t(self):        
-        from sympy import symbols, Eq, solve
-        E_staal = 210000
-        t = symbols('t')
-        i_goal = self.EIeff()*10**9 / E_staal
-        I = math.pi / 64 * (self.diameter**4 - (self.diameter - 2 * t)**4)
-        equation = Eq(i_goal, I)
-        t_solution = solve(equation, t)
-        return t_solution[0]
+    
     
     def calculate_I_pipe(self, t):
         I = math.pi / 64 * (self.diameter**4 - (self.diameter - 2 * t)**4)
