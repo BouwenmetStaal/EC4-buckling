@@ -79,12 +79,16 @@ class StaalBetonKolomCalculator:
             return False
 
 
-    def plot_diagrams(self, path:str):
+    def return_diagrams(self):
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
         ax1 = self.plot_interaction_diagram(ax1)
         ax2 = self.plot_stability_diagram(ax2)
         ax3 = self.plot_formula(ax3)
         plt.tight_layout()
+        return fig, (ax1, ax2, ax3)
+
+    def plot_diagrams(self, path: str):
+        fig, _ = self.return_diagrams()
         fig.savefig(path)
         plt.close(fig)
 
