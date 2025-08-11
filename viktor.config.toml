@@ -1,3 +1,3 @@
 app_type = "editor"
-python_version = "3.13"
+python_version = "3.10"
 registered_name = "ec4-buckling"

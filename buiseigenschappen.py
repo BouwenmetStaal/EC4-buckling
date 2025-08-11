@@ -1,3 +1,7 @@
+
+import matplotlib.pyplot as plt
+from typing import Tuple
+from matplotlib.figure import Figure
 from scipy.optimize import fsolve
 from Afgekapte_cirkel import TruncatedCircle, Circle
 from staal_beton_diagram import StaalBetonKolomCalculator
@@ -101,15 +105,62 @@ class BuisEigenschappen:
     def staalbijdragefactor(self):
         staal_A = Circle(self.staal_r).area() - Circle(self.beton_r).area()
         staalbijdragefactor = (staal_A*self.fyd)/ (self.NplRd()*1000)
+        criterion_text = "Can the column be considered as a steel-concrete column?"
+        latex_formula = r"$\delta = \frac{A_{staal} \cdot f_{yd}}{N_{pl,Rd} \cdot 1000}$"
         if staalbijdragefactor < 0.2:
-            text = f"$\delta$:{staalbijdragefactor:.2f} < 0.2 de kolom moet worden beschouwd als kolom van gewapend beton"
+            text = f"$\delta$:{staalbijdragefactor:.2f} < 0.2\n No, the column must be considered as a reinforced concrete column"
+            uitkomst = False
         elif staalbijdragefactor > 0.9:
-            text = f"$\delta$:{staalbijdragefactor:.2f} > 0.9 de kolom moet worden beschouwd als geheel stalen kolom"
+            text = f"$\delta$:{staalbijdragefactor:.2f} > 0.9\n No, the column must be considered as a fully steel column"
+            uitkomst = False
         else:
-            text = f"$\delta$: 0.2 < {staalbijdragefactor:.2f} < 0.9 de kolom moet worden beschouwd als staal-beton kolom"
-        return text
-            
+            text = f"$\delta$: 0.2 < {staalbijdragefactor:.2f} < 0.9\n Yes, the column must be considered as a steel-concrete column"
+            uitkomst = True
+
+        combined_text = f"{criterion_text}\n{latex_formula}\n{text}"
+        return combined_text, uitkomst
     
+    def plastic_analysis_criterion(self):
+        dt = self.diameter / self.t
+        criterion = 90 * (235 / self.fyd)
+        criterion_text = "Can the plastic capacity be considered?"
+        latex_formula = r"$\frac{d}{t} < 90 \cdot \frac{235}{f_{yd}}$"
+        if dt < criterion:
+            plastic = r"$\frac{d}{t} = "+f"{dt:.2f}"+r" < 90 \cdot \frac{235}{"+f"{self.fyd}"+r"}$ = "+f"{criterion:.2f}"+f" \n Yes, Plastic analysis allowed"
+            uitkomst = True
+        else:
+            plastic = r"$\frac{d}{t} = "+f"{dt:.2f}"+r" \geq 90 \cdot \frac{235}{"+f"{self.fyd}"+r"}$ = "+f"{criterion:.2f}"+f" \n No, Does not fulfill d/t criterion for plastic analysis"
+            uitkomst = False
+        combined_text = f"{criterion_text}\n{latex_formula}\n{plastic}"
+        return combined_text, uitkomst
+    
+    def criteria_info(self):
+        text_a, bool_a = self.staalbijdragefactor()
+        text_b, bool_b = self.plastic_analysis_criterion()
+        combined_text = f"The cross-section must meet the following two requirements:\n\n\n{text_a}\n\n\n{text_b}\n"
+        if bool_a and bool_b:
+            return combined_text, True
+        else:
+            return combined_text, False
+
+    
+
+    def figure_criteria_info(self) -> Tuple[Figure, bool]:
+        """
+        Generates a matplotlib figure displaying criteria information as centered text.
+
+        Calls the `criteria_info` method to retrieve the criteria text and a boolean value.
+        Creates a figure with the criteria text displayed in the center, with axes turned off.
+
+        Returns:
+            Tuple[Figure, bool]: The generated figure containing the criteria information and the boolean value.
+        """
+        text_a, bool_a = self.criteria_info()
+        fig, ax = plt.subplots(figsize=(6, 6))
+        ax.axis('off')
+        ax.text(0.5, 0.5, text_a, ha='center', va='center', wrap=True, fontsize=12)
+        return fig, bool_a
+
     def EIeff(self):
         """
         Calculate the effective flexural stiffness (EIeff) of a composite column section.
@@ -158,7 +209,6 @@ class BuisEigenschappen:
         return list_Mrd, list_Nrd
     
     def plot_MN_curve(self, filename):
-        import matplotlib.pyplot as plt
         list_Mrd, list_Nrd = self.create_MN_curve()
         plt.plot(list_Mrd, list_Nrd)
         plt.xlabel('M [kNm]')
@@ -201,6 +251,9 @@ if __name__ == "__main__":
 
     buis = BuisEigenschappen(8, diameter, fy, fcd, 0,0,0)
     buis = BuisEigenschappen(8, diameter, fy, fcd)
+
+    fig, _ = buis.figure_criteria_info()
+    fig.show()
 
     #buis.plot_MN_curve('testplots/buispaal_MN_curve.png')
 
